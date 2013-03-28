@@ -50,12 +50,18 @@ public slots:
   void onItemChanged(QTableWidgetItem *item);
   void refreshEntryView();
   void refreshTargetView();
+  void onAddButtonClicked();
+  void onDeleteButtonClicked();
+  void onUpdateButtonClicked();
+  void onClearButtonClicked();
+  void onTrajectoryListNodeChanged(vtkMRMLNode* newList);
 
 protected:
   QScopedPointer<qSlicerPathPlannerModuleWidgetPrivate> d_ptr;
   
   virtual void setup();
-  void addNewItem(QTableWidget* tableWidget, vtkMRMLAnnotationFiducialNode* fiducialNode);
+  void addNewFiducialItem(QTableWidget* tableWidget, vtkMRMLAnnotationFiducialNode* fiducialNode);
+  void addNewRulerItem(vtkMRMLAnnotationFiducialNode* entryPoint, vtkMRMLAnnotationFiducialNode* targetPoint);
 
 private:
   Q_DECLARE_PRIVATE(qSlicerPathPlannerModuleWidget);

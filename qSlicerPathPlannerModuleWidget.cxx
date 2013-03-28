@@ -24,8 +24,15 @@
 
 #include "qSlicerPathPlannerFiducialItem.h"
 
+#include "vtkSlicerAnnotationModuleLogic.h"
+#include "qSlicerAbstractCoreModule.h"
+#include "qSlicerCoreApplication.h"
+#include "qSlicerModuleManager.h"
+
 #include "vtkMRMLAnnotationFiducialNode.h"
+#include "vtkMRMLAnnotationRulerNode.h"
 #include "vtkMRMLAnnotationHierarchyNode.h"
+#include "vtkMRMLPathPlannerTrajectoryNode.h"
 
 //-----------------------------------------------------------------------------
 /// \ingroup Slicer_QtModules_ExtensionTemplate
@@ -33,6 +40,8 @@ class qSlicerPathPlannerModuleWidgetPrivate: public Ui_qSlicerPathPlannerModuleW
 {
 public:
   qSlicerPathPlannerModuleWidgetPrivate();
+
+  vtkMRMLPathPlannerTrajectoryNode *selectedTrajectoryNode;
 };
 
 //-----------------------------------------------------------------------------
@@ -42,6 +51,7 @@ public:
 qSlicerPathPlannerModuleWidgetPrivate::
 qSlicerPathPlannerModuleWidgetPrivate()
 {
+  this->selectedTrajectoryNode = NULL;
 }
 
 //-----------------------------------------------------------------------------
@@ -69,10 +79,29 @@ setup()
   d->setupUi(this);
   this->Superclass::setup();
 
+  // Entry table widget
   connect(d->EntryPointListNodeSelector, SIGNAL(nodeActivated(vtkMRMLNode*)),
 	  this, SLOT(onEntryListNodeChanged(vtkMRMLNode*)));
+
+  // Target table widget
   connect(d->TargetPointListNodeSelector, SIGNAL(nodeActivated(vtkMRMLNode*)),
 	  this, SLOT(onTargetListNodeChanged(vtkMRMLNode*)));
+  
+  // Trajectory table widget
+  connect(d->TrajectoryListNodeSelector, SIGNAL(nodeActivated(vtkMRMLNode*)),
+	  this, SLOT(onTrajectoryListNodeChanged(vtkMRMLNode*)));
+
+  connect(d->AddButton, SIGNAL(clicked()),
+	  this, SLOT(onAddButtonClicked()));
+	  
+  connect(d->DeleteButton, SIGNAL(clicked()),
+	  this, SLOT(onDeleteButtonClicked()));
+
+  connect(d->UpdateButton, SIGNAL(clicked()),
+	  this, SLOT(onUpdateButtonClicked()));
+
+  connect(d->ClearButton, SIGNAL(clicked()),
+	  this, SLOT(onClearButtonClicked()));
 
 }
 
@@ -95,12 +124,6 @@ onEntryListNodeChanged(vtkMRMLNode* newList)
     return;
     }
 
-  // Update widget
-  d->EntryPointWidget->setSelectedHierarchyNode(entryList);
-
-  // Refresh view
-  this->refreshEntryView();
-
   // Observe new hierarchy node
   qvtkConnect(entryList, vtkMRMLAnnotationHierarchyNode::ChildNodeAddedEvent,
 	      this, SLOT(refreshEntryView()));
@@ -111,6 +134,12 @@ onEntryListNodeChanged(vtkMRMLNode* newList)
   std::stringstream groupBoxName;
   groupBoxName << "Entry Point : " << entryList->GetName();
   d->EntryGroupBox->setTitle(groupBoxName.str().c_str());
+
+  // Update widget
+  d->EntryPointWidget->setSelectedHierarchyNode(entryList);
+
+  // Refresh view
+  this->refreshEntryView();
 }
 
 //-----------------------------------------------------------------------------
@@ -132,12 +161,6 @@ onTargetListNodeChanged(vtkMRMLNode* newList)
     return;
     }
 
-  // Update widget
-  d->TargetPointWidget->setSelectedHierarchyNode(targetList);
-
-  // Refresh view
-  this->refreshTargetView();
-  
   // Observe new hierarchy node
   qvtkConnect(targetList, vtkMRMLAnnotationHierarchyNode::ChildNodeAddedEvent,
 	      this, SLOT(refreshTargetView()));
@@ -148,11 +171,17 @@ onTargetListNodeChanged(vtkMRMLNode* newList)
   std::stringstream groupBoxName;
   groupBoxName << "Target Point : " << targetList->GetName();
   d->TargetGroupBox->setTitle(groupBoxName.str().c_str());
+
+  // Update widget
+  d->TargetPointWidget->setSelectedHierarchyNode(targetList);
+
+  // Refresh view
+  this->refreshTargetView();
 }
 
 //-----------------------------------------------------------------------------
 void qSlicerPathPlannerModuleWidget::
-addNewItem(QTableWidget* tableWidget, vtkMRMLAnnotationFiducialNode* fiducialNode)
+addNewFiducialItem(QTableWidget* tableWidget, vtkMRMLAnnotationFiducialNode* fiducialNode)
 {
   if (!tableWidget || !fiducialNode)
     {
@@ -231,7 +260,7 @@ refreshEntryView()
       vtkMRMLAnnotationFiducialNode::SafeDownCast(entryList->GetNthChildNode(i)->GetAssociatedNode());
     if (fiducialPoint)
       {
-      this->addNewItem(d->EntryPointWidget->getTableWidget(), fiducialPoint);
+      this->addNewFiducialItem(d->EntryPointWidget->getTableWidget(), fiducialPoint);
       }
     }
 }
@@ -261,7 +290,206 @@ refreshTargetView()
       vtkMRMLAnnotationFiducialNode::SafeDownCast(targetList->GetNthChildNode(i)->GetAssociatedNode());
     if (fiducialPoint)
       {
-      this->addNewItem(d->TargetPointWidget->getTableWidget(), fiducialPoint);
+      this->addNewFiducialItem(d->TargetPointWidget->getTableWidget(), fiducialPoint);
       }
     }
+}
+
+//-----------------------------------------------------------------------------
+void qSlicerPathPlannerModuleWidget::
+onTrajectoryListNodeChanged(vtkMRMLNode* newList)
+{
+  Q_D(qSlicerPathPlannerModuleWidget);
+
+  if (!newList)
+    {
+    return;
+    }
+
+  vtkMRMLPathPlannerTrajectoryNode* trajectoryList = 
+    vtkMRMLPathPlannerTrajectoryNode::SafeDownCast(newList);
+
+  if (!trajectoryList)
+    {
+    return;
+    }
+
+  // Update groupbox name
+  std::stringstream groupBoxName;
+  groupBoxName << "Trajectory : " << trajectoryList->GetName();
+  d->TrajectoryGroupBox->setTitle(groupBoxName.str().c_str());
+
+  // Update selected node
+  d->selectedTrajectoryNode = trajectoryList;
+}
+
+//-----------------------------------------------------------------------------
+void qSlicerPathPlannerModuleWidget::
+onAddButtonClicked()
+{
+  Q_D(qSlicerPathPlannerModuleWidget);
+
+  if (!d->EntryPointWidget | !d->TargetPointWidget)
+    {
+    return;
+    }
+
+  if (!d->EntryPointWidget->getTableWidget() |
+      !d->TargetPointWidget->getTableWidget())
+    {
+    return;
+    }
+
+  // Get target position
+  double targetRow = d->TargetPointWidget->getTableWidget()->currentRow();
+  if (targetRow < 0)
+    {
+    return;
+    }
+   
+  qSlicerPathPlannerFiducialItem* targetItem
+    = dynamic_cast<qSlicerPathPlannerFiducialItem*>(d->TargetPointWidget->getTableWidget()->item(targetRow, 0));
+  if (!targetItem)
+      {
+      return;
+      }
+      
+  vtkMRMLAnnotationFiducialNode* targetFiducial
+    = targetItem->getFiducialNode();
+  if (!targetFiducial)
+    {
+    return;
+    }
+
+  // Get entry position
+  double entryRow = d->EntryPointWidget->getTableWidget()->currentRow();
+  if (entryRow < 0)
+    {
+    return;
+    }
+
+  qSlicerPathPlannerFiducialItem* entryItem
+    = dynamic_cast<qSlicerPathPlannerFiducialItem*>(d->EntryPointWidget->getTableWidget()->item(entryRow, 0));
+  if (!entryItem)
+    {
+    return;
+    }
+
+  vtkMRMLAnnotationFiducialNode* entryFiducial
+    = entryItem->getFiducialNode();
+  if (!entryFiducial)
+    {
+    return;
+    }
+  
+  // Add new ruler
+  this->addNewRulerItem(entryFiducial, targetFiducial);
+
+  
+}
+
+//-----------------------------------------------------------------------------
+void qSlicerPathPlannerModuleWidget::
+onDeleteButtonClicked()
+{
+  Q_D(qSlicerPathPlannerModuleWidget);
+}
+
+//-----------------------------------------------------------------------------
+void qSlicerPathPlannerModuleWidget::
+onUpdateButtonClicked()
+{
+  Q_D(qSlicerPathPlannerModuleWidget);
+}
+
+//-----------------------------------------------------------------------------
+void qSlicerPathPlannerModuleWidget::
+onClearButtonClicked()
+{
+  Q_D(qSlicerPathPlannerModuleWidget);
+}
+
+//-----------------------------------------------------------------------------
+void qSlicerPathPlannerModuleWidget::
+addNewRulerItem(vtkMRMLAnnotationFiducialNode* entryPoint, vtkMRMLAnnotationFiducialNode* targetPoint)
+{
+  Q_D(qSlicerPathPlannerModuleWidget);
+
+  if (!entryPoint | !targetPoint)
+    {
+    return;
+    }
+
+  if (!d->selectedTrajectoryNode)
+    {
+    return;
+    }
+
+  double rowCount = d->TrajectoryTableWidget->rowCount();
+
+  // Check ruler not already existing
+  for (int i = 0; i < rowCount; i++)
+    {
+    QString targetName
+      = QString(d->TrajectoryTableWidget->item(i,1)->text());
+    QString newTargetName(targetPoint->GetName());
+    if (targetName.compare(newTargetName) == 0)
+      {
+      // Target found. Check if same entry point
+      QString entryName
+        = QString(d->TrajectoryTableWidget->item(i,2)->text());
+      QString newEntryName(entryPoint->GetName());
+      if (entryName.compare(newEntryName) == 0)
+        {
+        // Same entry point
+        return;
+        }
+      }
+    }
+
+
+  // Set active hierachy node
+  qSlicerAbstractCoreModule* annotationModule =
+    qSlicerCoreApplication::application()->moduleManager()->module("Annotations");
+  vtkSlicerAnnotationModuleLogic* annotationLogic;
+  if (annotationModule)
+    {
+    annotationLogic = 
+      vtkSlicerAnnotationModuleLogic::SafeDownCast(annotationModule->logic());
+    }
+  
+  if (annotationLogic->GetActiveHierarchyNode() != d->selectedTrajectoryNode)
+    {
+    annotationLogic->SetActiveHierarchyNodeID(d->selectedTrajectoryNode->GetID());
+    }
+
+  // Get target point position
+  double targetPosition[3];
+  targetPoint->GetFiducialCoordinates(targetPosition);
+
+  // Get entry point position
+  double entryPosition[3];
+  entryPoint->GetFiducialCoordinates(entryPosition);
+
+  // Create new ruler
+  vtkSmartPointer<vtkMRMLAnnotationRulerNode> rulerNode
+    = vtkSmartPointer<vtkMRMLAnnotationRulerNode>::New();
+  rulerNode->Initialize(this->mrmlScene());
+  rulerNode->SetPosition1(entryPosition);
+  rulerNode->SetPosition2(targetPosition);
+
+  // Insert new row
+  d->TrajectoryTableWidget->insertRow(rowCount);
+
+  // Populate row
+  d->TrajectoryTableWidget->setItem(rowCount, 0, new QTableWidgetItem(rulerNode->GetName()));
+  d->TrajectoryTableWidget->setItem(rowCount, 1, new QTableWidgetItem(targetPoint->GetName()));
+  d->TrajectoryTableWidget->setItem(rowCount, 2, new QTableWidgetItem(entryPoint->GetName()));
+
+  // Set only name editable
+  d->TrajectoryTableWidget->item(rowCount,1)->setFlags(d->TrajectoryTableWidget->item(rowCount,1)->flags() & ~Qt::ItemIsEditable);
+  d->TrajectoryTableWidget->item(rowCount,2)->setFlags(d->TrajectoryTableWidget->item(rowCount,2)->flags() & ~Qt::ItemIsEditable);
+
+  // Automatic scroll to last item added
+  d->TrajectoryTableWidget->scrollToItem(d->TrajectoryTableWidget->item(rowCount,0));  
 }

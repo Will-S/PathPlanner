@@ -19,6 +19,7 @@
 #include "vtkSlicerPathPlannerLogic.h"
 
 // MRML includes
+#include "vtkMRMLPathPlannerTrajectoryNode.h"
 
 // VTK includes
 #include <vtkNew.h>
@@ -59,6 +60,11 @@ void vtkSlicerPathPlannerLogic::SetMRMLSceneInternal(vtkMRMLScene * newScene)
 void vtkSlicerPathPlannerLogic::RegisterNodes()
 {
   assert(this->GetMRMLScene() != 0);
+
+  vtkMRMLPathPlannerTrajectoryNode* trajectoryNode 
+    = vtkMRMLPathPlannerTrajectoryNode::New();
+  this->GetMRMLScene()->RegisterNodeClass(trajectoryNode);
+  trajectoryNode->Delete();
 }
 
 //---------------------------------------------------------------------------

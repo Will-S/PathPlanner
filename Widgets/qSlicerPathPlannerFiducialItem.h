@@ -49,7 +49,7 @@ class qSlicerPathPlannerFiducialItem : public QObject, public QTableWidgetItem
 
  public slots:
    void updateItem();
-  
+
  private:
   vtkMRMLAnnotationFiducialNode* FiducialNode;
 };
