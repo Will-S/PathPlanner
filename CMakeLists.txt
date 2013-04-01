@@ -85,6 +85,6 @@ if(BUILD_TESTING)
 endif()
 
 #-----------------------------------------------------------------------------
-if(NOT Slicer_SOURCE_DIR)
+if(NOT DEFINED SlicerIGT_SUPBERBUILD)
   include(${Slicer_EXTENSION_CPACK})
 endif()
