@@ -55,6 +55,8 @@ public slots:
   void onUpdateButtonClicked();
   void onClearButtonClicked();
   void onTrajectoryListNodeChanged(vtkMRMLNode* newList);
+  void onTrajectoryCellClicked(int row, int column);
+  void onMRMLSceneChanged(vtkMRMLScene* newScene);
 
 protected:
   QScopedPointer<qSlicerPathPlannerModuleWidgetPrivate> d_ptr;

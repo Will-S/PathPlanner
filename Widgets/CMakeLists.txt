@@ -12,11 +12,14 @@ set(${KIT}_SRCS
   qSlicer${MODULE_NAME}TableWidget.h
   qSlicer${MODULE_NAME}FiducialItem.cxx
   qSlicer${MODULE_NAME}FiducialItem.h
+  qSlicer${MODULE_NAME}TrajectoryItem.cxx
+  qSlicer${MODULE_NAME}TrajectoryItem.h
   )
 
 set(${KIT}_MOC_SRCS
   qSlicer${MODULE_NAME}TableWidget.h
   qSlicer${MODULE_NAME}FiducialItem.h
+  qSlicer${MODULE_NAME}TrajectoryItem.h
   )
 
 set(${KIT}_UI_SRCS

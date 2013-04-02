@@ -92,8 +92,8 @@ updateItem()
     if (pointName.compare(fiducialName) != 0)
       {
       // Item name is different from fiducial name
-      // Change fiducial name
-      this->FiducialNode->SetName(tableWidget->item(itemRow,0)->text().toStdString().c_str());
+      // Update fiducial name
+      this->FiducialNode->SetName(pointName.toStdString().c_str());
       }
     }
 

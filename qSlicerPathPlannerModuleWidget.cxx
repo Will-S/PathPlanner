@@ -23,6 +23,7 @@
 #include "ui_qSlicerPathPlannerModuleWidget.h"
 
 #include "qSlicerPathPlannerFiducialItem.h"
+#include "qSlicerPathPlannerTrajectoryItem.h"
 
 #include "vtkSlicerAnnotationModuleLogic.h"
 #include "qSlicerAbstractCoreModule.h"
@@ -32,6 +33,7 @@
 #include "vtkMRMLAnnotationFiducialNode.h"
 #include "vtkMRMLAnnotationRulerNode.h"
 #include "vtkMRMLAnnotationHierarchyNode.h"
+#include "vtkMRMLAnnotationPointDisplayNode.h"
 #include "vtkMRMLPathPlannerTrajectoryNode.h"
 
 //-----------------------------------------------------------------------------
@@ -103,6 +105,11 @@ setup()
   connect(d->ClearButton, SIGNAL(clicked()),
 	  this, SLOT(onClearButtonClicked()));
 
+  connect(d->TrajectoryTableWidget, SIGNAL(cellClicked(int,int)),
+	  this, SLOT(onTrajectoryCellClicked(int,int)));
+
+  connect(this, SIGNAL(mrmlSceneChanged(vtkMRMLScene*)),
+	  this, SLOT(onMRMLSceneChanged(vtkMRMLScene*)));
 }
 
 //-----------------------------------------------------------------------------
@@ -183,11 +190,31 @@ onTargetListNodeChanged(vtkMRMLNode* newList)
 void qSlicerPathPlannerModuleWidget::
 addNewFiducialItem(QTableWidget* tableWidget, vtkMRMLAnnotationFiducialNode* fiducialNode)
 {
+  Q_D(qSlicerPathPlannerModuleWidget);
+
   if (!tableWidget || !fiducialNode)
     {
     return;
     }
   
+  // Set fiducial properties
+  // Opacity: 0.3 by default
+  fiducialNode->GetAnnotationPointDisplayNode()->SetOpacity(0.3);
+
+  // Set fiducial name
+  if (tableWidget == d->TargetPointWidget->getTableWidget())
+    {
+    std::stringstream targetName;
+    targetName << "Target " << d->TargetPointWidget->getTableWidget()->rowCount()+1;
+    fiducialNode->SetName(targetName.str().c_str());
+    }
+  else if (tableWidget == d->EntryPointWidget->getTableWidget())
+    {
+    std::stringstream entryName;
+    entryName << "Entry " << d->EntryPointWidget->getTableWidget()->rowCount()+1;
+    fiducialNode->SetName(entryName.str().c_str());
+    }
+
   int numberOfItems = tableWidget->rowCount(); 
   tableWidget->insertRow(numberOfItems);
 
@@ -200,12 +227,6 @@ addNewFiducialItem(QTableWidget* tableWidget, vtkMRMLAnnotationFiducialNode* fid
   tableWidget->setItem(numberOfItems, 3, new QTableWidgetItem());
   tableWidget->setItem(numberOfItems, 4, new QTableWidgetItem());
   newItem->setFiducialNode(fiducialNode);
-
-  // Set only name editable
-  tableWidget->item(numberOfItems,1)->setFlags(tableWidget->item(numberOfItems,1)->flags() & ~Qt::ItemIsEditable);
-  tableWidget->item(numberOfItems,2)->setFlags(tableWidget->item(numberOfItems,2)->flags() & ~Qt::ItemIsEditable);
-  tableWidget->item(numberOfItems,3)->setFlags(tableWidget->item(numberOfItems,3)->flags() & ~Qt::ItemIsEditable);
-  tableWidget->item(numberOfItems,4)->setFlags(tableWidget->item(numberOfItems,4)->flags() & ~Qt::ItemIsEditable);
 
   // Automatic scroll to last item added
   tableWidget->scrollToItem(tableWidget->item(numberOfItems,1));
@@ -260,6 +281,10 @@ refreshEntryView()
       vtkMRMLAnnotationFiducialNode::SafeDownCast(entryList->GetNthChildNode(i)->GetAssociatedNode());
     if (fiducialPoint)
       {
+      // Set color to blue for entry points
+      fiducialPoint->GetAnnotationPointDisplayNode()->SetColor(0,0,1);
+
+      // Add fiducial
       this->addNewFiducialItem(d->EntryPointWidget->getTableWidget(), fiducialPoint);
       }
     }
@@ -290,6 +315,10 @@ refreshTargetView()
       vtkMRMLAnnotationFiducialNode::SafeDownCast(targetList->GetNthChildNode(i)->GetAssociatedNode());
     if (fiducialPoint)
       {
+      // Set color to blue for entry points
+      fiducialPoint->GetAnnotationPointDisplayNode()->SetColor(0,1,0);
+
+      // Add fiducial
       this->addNewFiducialItem(d->TargetPointWidget->getTableWidget(), fiducialPoint);
       }
     }
@@ -321,6 +350,12 @@ onTrajectoryListNodeChanged(vtkMRMLNode* newList)
 
   // Update selected node
   d->selectedTrajectoryNode = trajectoryList;
+
+  // Clear widget
+  d->TrajectoryTableWidget->clearContents();
+  d->TrajectoryTableWidget->setRowCount(0);
+
+  // TODO: Populate table with trajectory in new node
 }
 
 //-----------------------------------------------------------------------------
@@ -393,6 +428,23 @@ void qSlicerPathPlannerModuleWidget::
 onDeleteButtonClicked()
 {
   Q_D(qSlicerPathPlannerModuleWidget);
+
+  int selectedRow = d->TrajectoryTableWidget->currentRow();
+  if (selectedRow < 0)
+    {
+    return;
+    }
+
+  // Remove ruler from scene
+  qSlicerPathPlannerTrajectoryItem* itemToRemove =
+    dynamic_cast<qSlicerPathPlannerTrajectoryItem*>(d->TrajectoryTableWidget->item(selectedRow,0));
+  if (itemToRemove)
+    {
+    this->mrmlScene()->RemoveNode(itemToRemove->trajectoryNode());
+    }
+
+  // Remove from widget
+  d->TrajectoryTableWidget->removeRow(selectedRow);
 }
 
 //-----------------------------------------------------------------------------
@@ -400,6 +452,65 @@ void qSlicerPathPlannerModuleWidget::
 onUpdateButtonClicked()
 {
   Q_D(qSlicerPathPlannerModuleWidget);
+
+  if (!d->TrajectoryTableWidget)
+    {
+    return;
+    }
+
+  if (!d->TargetPointWidget |
+      !d->EntryPointWidget)
+    {
+    return;
+    }
+
+  QTableWidget* targetTable = d->TargetPointWidget->getTableWidget();
+  QTableWidget* entryTable = d->EntryPointWidget->getTableWidget();
+
+  if (!targetTable |
+      !entryTable)
+    {
+    return;
+    }
+
+  // Get selected rows
+  int trajectoryRow = d->TrajectoryTableWidget->currentRow();
+  int targetRow = targetTable->currentRow();
+  int entryRow = entryTable->currentRow();
+
+  if ((trajectoryRow < 0) |
+      (targetRow < 0) |
+      (entryRow < 0))
+    {
+    return;
+    }
+
+  // Get items
+  qSlicerPathPlannerFiducialItem *targetItem =
+    dynamic_cast<qSlicerPathPlannerFiducialItem*>(targetTable->item(targetRow,0));
+  qSlicerPathPlannerFiducialItem *entryItem =
+    dynamic_cast<qSlicerPathPlannerFiducialItem*>(entryTable->item(entryRow,0));
+  qSlicerPathPlannerTrajectoryItem *trajectoryItem =
+    dynamic_cast<qSlicerPathPlannerTrajectoryItem*>(d->TrajectoryTableWidget->item(trajectoryRow,0));
+
+  if (!targetItem |
+      !entryItem |
+      !trajectoryItem)
+    {
+    return;
+    }
+  
+  // Update trajectory
+  if (trajectoryItem->entryPoint() != entryItem->getFiducialNode())
+    {
+    trajectoryItem->setEntryPoint(entryItem->getFiducialNode());
+    }
+
+  if (trajectoryItem->targetPoint() != targetItem->getFiducialNode())
+    {
+    trajectoryItem->setTargetPoint(targetItem->getFiducialNode());
+    }
+  
 }
 
 //-----------------------------------------------------------------------------
@@ -407,6 +518,16 @@ void qSlicerPathPlannerModuleWidget::
 onClearButtonClicked()
 {
   Q_D(qSlicerPathPlannerModuleWidget);
+
+  // Get hierarchy node
+  vtkMRMLPathPlannerTrajectoryNode* selectedHierarchy
+    = vtkMRMLPathPlannerTrajectoryNode::SafeDownCast(d->TrajectoryListNodeSelector->currentNode());
+  if (selectedHierarchy)
+    {
+    selectedHierarchy->RemoveAllChildrenNodes();
+    d->TrajectoryTableWidget->clearContents();
+    d->TrajectoryTableWidget->setRowCount(0);
+    }
 }
 
 //-----------------------------------------------------------------------------
@@ -430,20 +551,18 @@ addNewRulerItem(vtkMRMLAnnotationFiducialNode* entryPoint, vtkMRMLAnnotationFidu
   // Check ruler not already existing
   for (int i = 0; i < rowCount; i++)
     {
-    QString targetName
-      = QString(d->TrajectoryTableWidget->item(i,1)->text());
-    QString newTargetName(targetPoint->GetName());
-    if (targetName.compare(newTargetName) == 0)
+    qSlicerPathPlannerTrajectoryItem* currentItem = 
+      dynamic_cast<qSlicerPathPlannerTrajectoryItem*>(d->TrajectoryTableWidget->item(i,0));
+    if (currentItem)
       {
-      // Target found. Check if same entry point
-      QString entryName
-        = QString(d->TrajectoryTableWidget->item(i,2)->text());
-      QString newEntryName(entryPoint->GetName());
-      if (entryName.compare(newEntryName) == 0)
-        {
-        // Same entry point
-        return;
-        }
+      if (currentItem->entryPoint() == entryPoint)
+	{
+	if (currentItem->targetPoint() == targetPoint)
+	  {
+	  // Trajectory alread exists
+	  return;
+	  }
+	}
       }
     }
 
@@ -463,28 +582,23 @@ addNewRulerItem(vtkMRMLAnnotationFiducialNode* entryPoint, vtkMRMLAnnotationFidu
     annotationLogic->SetActiveHierarchyNodeID(d->selectedTrajectoryNode->GetID());
     }
 
-  // Get target point position
-  double targetPosition[3];
-  targetPoint->GetFiducialCoordinates(targetPosition);
-
-  // Get entry point position
-  double entryPosition[3];
-  entryPoint->GetFiducialCoordinates(entryPosition);
-
-  // Create new ruler
-  vtkSmartPointer<vtkMRMLAnnotationRulerNode> rulerNode
-    = vtkSmartPointer<vtkMRMLAnnotationRulerNode>::New();
-  rulerNode->Initialize(this->mrmlScene());
-  rulerNode->SetPosition1(entryPosition);
-  rulerNode->SetPosition2(targetPosition);
-
   // Insert new row
   d->TrajectoryTableWidget->insertRow(rowCount);
 
   // Populate row
-  d->TrajectoryTableWidget->setItem(rowCount, 0, new QTableWidgetItem(rulerNode->GetName()));
-  d->TrajectoryTableWidget->setItem(rowCount, 1, new QTableWidgetItem(targetPoint->GetName()));
-  d->TrajectoryTableWidget->setItem(rowCount, 2, new QTableWidgetItem(entryPoint->GetName()));
+  qSlicerPathPlannerTrajectoryItem* newTrajectory = new qSlicerPathPlannerTrajectoryItem();
+  d->TrajectoryTableWidget->setItem(rowCount, 0, newTrajectory);
+  d->TrajectoryTableWidget->setItem(rowCount, 1, new QTableWidgetItem());
+  d->TrajectoryTableWidget->setItem(rowCount, 2, new QTableWidgetItem());
+
+  newTrajectory->setEntryPoint(entryPoint);
+  newTrajectory->setTargetPoint(targetPoint);
+
+  if (newTrajectory->trajectoryNode())
+    {
+    newTrajectory->trajectoryNode()->Initialize(this->mrmlScene());
+    newTrajectory->updateItem();
+    }
 
   // Set only name editable
   d->TrajectoryTableWidget->item(rowCount,1)->setFlags(d->TrajectoryTableWidget->item(rowCount,1)->flags() & ~Qt::ItemIsEditable);
@@ -492,4 +606,123 @@ addNewRulerItem(vtkMRMLAnnotationFiducialNode* entryPoint, vtkMRMLAnnotationFidu
 
   // Automatic scroll to last item added
   d->TrajectoryTableWidget->scrollToItem(d->TrajectoryTableWidget->item(rowCount,0));  
+}
+
+//-----------------------------------------------------------------------------
+void qSlicerPathPlannerModuleWidget::
+onTrajectoryCellClicked(int row, int column)
+{
+  Q_D(qSlicerPathPlannerModuleWidget);
+
+  if (!d->TrajectoryTableWidget |
+      !d->EntryPointWidget |
+      !d->TargetPointWidget)
+    {
+    return;
+    }
+
+  // Get item selected
+  qSlicerPathPlannerTrajectoryItem* selectedTrajectory
+    = dynamic_cast<qSlicerPathPlannerTrajectoryItem*>(d->TrajectoryTableWidget->item(row,0));
+  if (!selectedTrajectory)
+    {
+    return;
+    }
+
+  // Find target point
+  vtkMRMLAnnotationFiducialNode* targetFiducial =
+    selectedTrajectory->targetPoint();
+  if (targetFiducial)
+    {
+    for (int i = 0; i < d->TargetPointWidget->getTableWidget()->rowCount(); i++)
+      {
+      qSlicerPathPlannerFiducialItem* currentFiducial =
+	dynamic_cast<qSlicerPathPlannerFiducialItem*>(d->TargetPointWidget->getTableWidget()->item(i,0));
+      if (currentFiducial)
+	{
+	if (currentFiducial->getFiducialNode() == targetFiducial)
+	  {
+	  // Target found. Select it.
+	  d->TargetPointWidget->getTableWidget()->setCurrentCell(i,0);
+	  break;
+	  }
+	}
+      }
+    }
+
+  // Find entry point
+  vtkMRMLAnnotationFiducialNode* entryFiducial =
+    selectedTrajectory->entryPoint();
+  if (entryFiducial)
+    {
+    for (int i = 0; i < d->EntryPointWidget->getTableWidget()->rowCount(); i++)
+      {
+      qSlicerPathPlannerFiducialItem* currentFiducial =
+	dynamic_cast<qSlicerPathPlannerFiducialItem*>(d->EntryPointWidget->getTableWidget()->item(i,0));
+      if (currentFiducial)
+	{
+	if (currentFiducial->getFiducialNode() == entryFiducial)
+	  {
+	  // Entry found. Select it.
+	  d->EntryPointWidget->getTableWidget()->setCurrentCell(i,0);
+	  break;
+	  }
+	}
+      }
+    }
+}
+
+
+//-----------------------------------------------------------------------------
+void qSlicerPathPlannerModuleWidget::
+onMRMLSceneChanged(vtkMRMLScene* newScene)
+{
+  Q_D(qSlicerPathPlannerModuleWidget);
+  
+  if (!d->TargetPointListNodeSelector |
+      !d->EntryPointListNodeSelector |
+      !d->TrajectoryListNodeSelector)
+    {
+    return;
+    }
+
+  // Get Annotation Logic
+  qSlicerAbstractCoreModule* annotationModule =
+    qSlicerCoreApplication::application()->moduleManager()->module("Annotations");
+  vtkSlicerAnnotationModuleLogic* annotationLogic;
+  if (annotationModule)
+    {
+    annotationLogic = 
+      vtkSlicerAnnotationModuleLogic::SafeDownCast(annotationModule->logic());
+    if (annotationLogic)
+      {
+      const char* topLevelID = annotationLogic->GetTopLevelHierarchyNodeID();
+      
+      // Create Target Hierarchy Node
+      annotationLogic->AddHierarchy();
+      vtkMRMLAnnotationHierarchyNode* targetHierarchy
+	= annotationLogic->GetActiveHierarchyNode();
+      if (targetHierarchy)
+	{
+	targetHierarchy->SetName("Target List");
+	d->TargetPointListNodeSelector->setCurrentNode(targetHierarchy);
+	}
+      annotationLogic->SetActiveHierarchyNodeID(topLevelID);
+      
+      // Create Entry Hierarchy Node
+      annotationLogic->AddHierarchy();      
+      vtkMRMLAnnotationHierarchyNode* entryHierarchy
+	= annotationLogic->GetActiveHierarchyNode();
+      if (entryHierarchy)
+	{
+	entryHierarchy->SetName("Entry List");
+	d->EntryPointListNodeSelector->setCurrentNode(entryHierarchy);
+	}
+      }
+    }
+
+  // Create new PathPlannerTrajectory Node
+  vtkMRMLNode* newTrajectoryNode =
+    d->TrajectoryListNodeSelector->addNode();
+  //newScene->AddNode(newTrajectoryNode);
 }
