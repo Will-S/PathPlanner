@@ -20,6 +20,9 @@
 
 #include "qSlicerPathPlannerTrajectoryItem.h"
 
+#include "qSlicerCoreApplication.h"
+#include "vtkMRMLScene.h"
+
 // MRML includes
 #include "vtkMRMLAnnotationFiducialNode.h"
 #include "vtkMRMLAnnotationRulerNode.h"
@@ -108,6 +111,7 @@ trajectoryNode()
 void qSlicerPathPlannerTrajectoryItem::
 updateItem()
 {
+  // TODO: Remove ruler if one of the point removed
   if (!this->EntryPoint | !this->TargetPoint)
     {
     return;

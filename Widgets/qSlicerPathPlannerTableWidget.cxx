@@ -26,6 +26,7 @@
 #include "vtkNew.h"
 #include "vtkSmartPointer.h"
 #include "vtkMRMLAnnotationHierarchyNode.h"
+#include "vtkMRMLAnnotationPointDisplayNode.h"
 #include "vtkMRMLInteractionNode.h"
 #include "vtkMRMLSelectionNode.h"
 
@@ -95,6 +96,9 @@ qSlicerPathPlannerTableWidget
 
   connect(d->ClearButton, SIGNAL(clicked()),
 	  this, SLOT(onClearButtonClicked()));
+
+  connect(d->TableWidget, SIGNAL(itemSelectionChanged()),
+	  this, SLOT(onSelectionChanged()));
 }
 
 //-----------------------------------------------------------------------------
@@ -216,5 +220,55 @@ void qSlicerPathPlannerTableWidget
   d->TableWidget->setRowCount(0);
 }
 
+//-----------------------------------------------------------------------------
+void qSlicerPathPlannerTableWidget
+::onSelectionChanged()
+{
+  Q_D(qSlicerPathPlannerTableWidget);
 
+  int selectedRow = d->TableWidget->currentRow();
+  if (selectedRow < 0)
+    {
+    return;
+    }
+
+  // Get fiducial
+  qSlicerPathPlannerFiducialItem* selectedItem =
+    dynamic_cast<qSlicerPathPlannerFiducialItem*>(d->TableWidget->item(selectedRow,0));
+
+  if (!selectedItem)
+    {
+    return;
+    }
+
+  vtkMRMLAnnotationFiducialNode* selectedFiducial =
+    selectedItem->getFiducialNode();
+
+  if (!selectedFiducial)
+    {
+    return;
+    }
+
+  // Set opacity of selected fiducial to 1.0
+  selectedFiducial->GetAnnotationPointDisplayNode()->SetOpacity(1.0);
+
+  // Set opacity of non-selected fiducials to 0.3
+  for(int i = 0; i < d->TableWidget->rowCount(); i++)
+    {
+    if (i != selectedRow)
+      {
+      qSlicerPathPlannerFiducialItem* currentItem =
+	dynamic_cast<qSlicerPathPlannerFiducialItem*>(d->TableWidget->item(i,0));
+      if (currentItem)
+	{
+	vtkMRMLAnnotationFiducialNode* currentFiducial =
+	  currentItem->getFiducialNode();
+	if (currentFiducial)
+	  {
+	  currentFiducial->GetAnnotationPointDisplayNode()->SetOpacity(0.3);
+	  }
+	}
+      }
+    }
+}
 

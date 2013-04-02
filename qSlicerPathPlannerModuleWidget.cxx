@@ -110,6 +110,12 @@ setup()
 
   connect(this, SIGNAL(mrmlSceneChanged(vtkMRMLScene*)),
 	  this, SLOT(onMRMLSceneChanged(vtkMRMLScene*)));
+
+  connect(d->TargetPointWidget->getTableWidget(), SIGNAL(itemSelectionChanged()),
+	  this, SLOT(onTargetSelectionChanged()));
+
+  connect(d->EntryPointWidget->getTableWidget(), SIGNAL(itemSelectionChanged()),
+	  this, SLOT(onEntrySelectionChanged()));
 }
 
 //-----------------------------------------------------------------------------
@@ -511,6 +517,7 @@ onUpdateButtonClicked()
     trajectoryItem->setTargetPoint(targetItem->getFiducialNode());
     }
   
+  d->UpdateButton->setEnabled(0);
 }
 
 //-----------------------------------------------------------------------------
@@ -725,4 +732,79 @@ onMRMLSceneChanged(vtkMRMLScene* newScene)
   vtkMRMLNode* newTrajectoryNode =
     d->TrajectoryListNodeSelector->addNode();
   //newScene->AddNode(newTrajectoryNode);
+}
+
+
+//-----------------------------------------------------------------------------
+void qSlicerPathPlannerModuleWidget::
+onTargetSelectionChanged()
+{
+  Q_D(qSlicerPathPlannerModuleWidget);
+
+  if (!d->TargetPointWidget->getTableWidget() | 
+      !d->TrajectoryTableWidget)
+    {
+    return;
+    }
+
+  // Check if same fiducial
+  int targetRow = d->TargetPointWidget->getTableWidget()->currentRow();
+  int trajectoryRow = d->TrajectoryTableWidget->currentRow();
+
+  // Get nodes
+  qSlicerPathPlannerFiducialItem* targetItem =
+    dynamic_cast<qSlicerPathPlannerFiducialItem*>(d->TargetPointWidget->getTableWidget()->item(targetRow,0));
+  qSlicerPathPlannerTrajectoryItem* trajectoryItem =
+    dynamic_cast<qSlicerPathPlannerTrajectoryItem*>(d->TrajectoryTableWidget->item(trajectoryRow,0));
+
+  if (targetItem && trajectoryItem)
+    {
+    if (targetItem->getFiducialNode() == trajectoryItem->targetPoint())
+      {
+      // Same. No update.
+      d->UpdateButton->setEnabled(0);
+      }
+    else
+      {
+      // Different. Allow update.
+      d->UpdateButton->setEnabled(1);
+      }
+    }
+}
+
+//-----------------------------------------------------------------------------
+void qSlicerPathPlannerModuleWidget::
+onEntrySelectionChanged()
+{
+  Q_D(qSlicerPathPlannerModuleWidget);
+
+  if (!d->EntryPointWidget->getTableWidget() | 
+      !d->TrajectoryTableWidget)
+    {
+    return;
+    }
+
+  // Check if same fiducial
+  int entryRow = d->EntryPointWidget->getTableWidget()->currentRow();
+  int trajectoryRow = d->TrajectoryTableWidget->currentRow();
+
+  // Get nodes
+  qSlicerPathPlannerFiducialItem* entryItem =
+    dynamic_cast<qSlicerPathPlannerFiducialItem*>(d->EntryPointWidget->getTableWidget()->item(entryRow,0));
+  qSlicerPathPlannerTrajectoryItem* trajectoryItem =
+    dynamic_cast<qSlicerPathPlannerTrajectoryItem*>(d->TrajectoryTableWidget->item(trajectoryRow,0));
+
+  if (entryItem && trajectoryItem)
+    {
+    if (entryItem->getFiducialNode() == trajectoryItem->entryPoint())
+      {
+      // Same. No update.
+      d->UpdateButton->setEnabled(0);
+      }
+    else
+      {
+      // Different. Allow update.
+      d->UpdateButton->setEnabled(1);
+      }
+    }
 }
