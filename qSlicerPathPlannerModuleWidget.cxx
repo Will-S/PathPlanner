@@ -85,10 +85,16 @@ setup()
   connect(d->EntryPointListNodeSelector, SIGNAL(nodeActivated(vtkMRMLNode*)),
 	  this, SLOT(onEntryListNodeChanged(vtkMRMLNode*)));
 
+  connect(d->EntryPointWidget->getTableWidget(), SIGNAL(itemSelectionChanged()),
+	  this, SLOT(onEntrySelectionChanged()));
+
   // Target table widget
   connect(d->TargetPointListNodeSelector, SIGNAL(nodeActivated(vtkMRMLNode*)),
 	  this, SLOT(onTargetListNodeChanged(vtkMRMLNode*)));
   
+  connect(d->TargetPointWidget->getTableWidget(), SIGNAL(itemSelectionChanged()),
+	  this, SLOT(onTargetSelectionChanged()));
+
   // Trajectory table widget
   connect(d->TrajectoryListNodeSelector, SIGNAL(nodeActivated(vtkMRMLNode*)),
 	  this, SLOT(onTrajectoryListNodeChanged(vtkMRMLNode*)));
@@ -108,14 +114,11 @@ setup()
   connect(d->TrajectoryTableWidget, SIGNAL(cellClicked(int,int)),
 	  this, SLOT(onTrajectoryCellClicked(int,int)));
 
+  // mrmlScene
   connect(this, SIGNAL(mrmlSceneChanged(vtkMRMLScene*)),
 	  this, SLOT(onMRMLSceneChanged(vtkMRMLScene*)));
 
-  connect(d->TargetPointWidget->getTableWidget(), SIGNAL(itemSelectionChanged()),
-	  this, SLOT(onTargetSelectionChanged()));
 
-  connect(d->EntryPointWidget->getTableWidget(), SIGNAL(itemSelectionChanged()),
-	  this, SLOT(onEntrySelectionChanged()));
 }
 
 //-----------------------------------------------------------------------------
@@ -234,8 +237,9 @@ addNewFiducialItem(QTableWidget* tableWidget, vtkMRMLAnnotationFiducialNode* fid
   tableWidget->setItem(numberOfItems, 4, new QTableWidgetItem());
   newItem->setFiducialNode(fiducialNode);
 
-  // Automatic scroll to last item added
+  // Automatic scroll and select last item added
   tableWidget->scrollToItem(tableWidget->item(numberOfItems,1));
+  tableWidget->setCurrentCell(tableWidget->rowCount()-1,0);
 
   // Update item if changed  
   connect(tableWidget, SIGNAL(itemChanged(QTableWidgetItem*)),
@@ -362,6 +366,7 @@ onTrajectoryListNodeChanged(vtkMRMLNode* newList)
   d->TrajectoryTableWidget->setRowCount(0);
 
   // TODO: Populate table with trajectory in new node
+  // How to know which fiducials have been used to create ruler ?
 }
 
 //-----------------------------------------------------------------------------
@@ -425,8 +430,6 @@ onAddButtonClicked()
   
   // Add new ruler
   this->addNewRulerItem(entryFiducial, targetFiducial);
-
-  
 }
 
 //-----------------------------------------------------------------------------
@@ -526,15 +529,15 @@ onClearButtonClicked()
 {
   Q_D(qSlicerPathPlannerModuleWidget);
 
-  // Get hierarchy node
-  vtkMRMLPathPlannerTrajectoryNode* selectedHierarchy
-    = vtkMRMLPathPlannerTrajectoryNode::SafeDownCast(d->TrajectoryListNodeSelector->currentNode());
-  if (selectedHierarchy)
+  if (!d->selectedTrajectoryNode)
     {
-    selectedHierarchy->RemoveAllChildrenNodes();
-    d->TrajectoryTableWidget->clearContents();
-    d->TrajectoryTableWidget->setRowCount(0);
+    return;
     }
+
+  // Clear hierarchy node and widget
+  d->selectedTrajectoryNode->RemoveAllChildrenNodes();
+  d->TrajectoryTableWidget->clearContents();
+  d->TrajectoryTableWidget->setRowCount(0);
 }
 
 //-----------------------------------------------------------------------------
@@ -731,7 +734,6 @@ onMRMLSceneChanged(vtkMRMLScene* newScene)
   // Create new PathPlannerTrajectory Node
   vtkMRMLNode* newTrajectoryNode =
     d->TrajectoryListNodeSelector->addNode();
-  //newScene->AddNode(newTrajectoryNode);
 }
 
 
