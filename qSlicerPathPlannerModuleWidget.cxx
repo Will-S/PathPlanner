@@ -114,6 +114,9 @@ setup()
   connect(d->TrajectoryTableWidget, SIGNAL(cellClicked(int,int)),
 	  this, SLOT(onTrajectoryCellClicked(int,int)));
 
+  connect(d->TrajectoryTableWidget, SIGNAL(cellChanged(int,int)),
+	  this, SLOT(onTrajectoryCellChanged(int,int)));
+
   // mrmlScene
   connect(this, SIGNAL(mrmlSceneChanged(vtkMRMLScene*)),
 	  this, SLOT(onMRMLSceneChanged(vtkMRMLScene*)));
@@ -809,4 +812,41 @@ onEntrySelectionChanged()
       d->UpdateButton->setEnabled(1);
       }
     }
+}
+
+//-----------------------------------------------------------------------------
+void qSlicerPathPlannerModuleWidget::
+onTrajectoryCellChanged(int row, int column)
+{
+  Q_D(qSlicerPathPlannerModuleWidget);
+
+  if (!d->TrajectoryTableWidget)
+    {
+    return;
+    }
+
+  if (column != 0)
+    {
+    // Only update if name changed
+    return;
+    }
+
+  // Get item
+  qSlicerPathPlannerTrajectoryItem* currentItem =
+    dynamic_cast<qSlicerPathPlannerTrajectoryItem*>(d->TrajectoryTableWidget->item(row,0));
+  if (!currentItem)
+    {
+    return;
+    }
+
+  // Get ruler
+  vtkMRMLAnnotationRulerNode* currentRuler =
+    currentItem->trajectoryNode();
+  if (!currentRuler)
+    {
+    return;
+    }
+
+  // Set new name
+  currentRuler->SetName(currentItem->text().toStdString().c_str());
 }

@@ -59,6 +59,7 @@ public slots:
   void onMRMLSceneChanged(vtkMRMLScene* newScene);
   void onTargetSelectionChanged();
   void onEntrySelectionChanged();
+  void onTrajectoryCellChanged(int row, int column);
 
 protected:
   QScopedPointer<qSlicerPathPlannerModuleWidgetPrivate> d_ptr;
