@@ -55,6 +55,7 @@ public slots:
   void onDeleteButtonClicked();
   void onClearButtonClicked();
   void onSelectionChanged();
+  void onCellChanged(int row, int column);
 
 protected:
   QScopedPointer<qSlicerPathPlannerTableWidgetPrivate> d_ptr;

@@ -99,6 +99,9 @@ qSlicerPathPlannerTableWidget
 
   connect(d->TableWidget, SIGNAL(itemSelectionChanged()),
 	  this, SLOT(onSelectionChanged()));
+
+  connect(d->TableWidget, SIGNAL(cellChanged(int,int)),
+          this, SLOT(onCellChanged(int,int)));
 }
 
 //-----------------------------------------------------------------------------
@@ -272,3 +275,52 @@ void qSlicerPathPlannerTableWidget
     }
 }
 
+//-----------------------------------------------------------------------------
+void qSlicerPathPlannerTableWidget
+::onCellChanged(int row, int column)
+{
+  Q_D(qSlicerPathPlannerTableWidget);
+
+  if (!d->TableWidget->item(row,0) |
+      !d->TableWidget->item(row,1) |
+      !d->TableWidget->item(row,2) |
+      !d->TableWidget->item(row,3))
+    {
+    return;
+    }
+
+  qSlicerPathPlannerFiducialItem* currentItem =
+    dynamic_cast<qSlicerPathPlannerFiducialItem*>(d->TableWidget->item(row,0));
+  if (!currentItem)
+    {
+    return;
+    }
+  
+  // Get coordinates
+  QString xCoord = QString(d->TableWidget->item(row, 1)->text());
+  QString yCoord = QString(d->TableWidget->item(row, 2)->text());
+  QString zCoord = QString(d->TableWidget->item(row, 3)->text());
+
+  if (xCoord.isEmpty() | yCoord.isEmpty() | zCoord.isEmpty())
+    {
+    return;
+    }
+
+  // Convert coordinates from QString to double
+  double newFiducialCoordinates[3] = {
+    xCoord.toDouble(),
+    yCoord.toDouble(),
+    zCoord.toDouble() };
+
+  // Get fiducial and set new coordinates
+  vtkMRMLAnnotationFiducialNode* currentFiducial =
+    currentItem->getFiducialNode();
+  if (!currentFiducial)
+    {
+    return;
+    }
+
+  currentFiducial->SetFiducialCoordinates(newFiducialCoordinates);
+  // Update item
+  //currentItem->updateItem();
+}
