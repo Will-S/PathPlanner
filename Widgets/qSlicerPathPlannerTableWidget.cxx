@@ -247,7 +247,8 @@ void qSlicerPathPlannerTableWidget
   vtkMRMLAnnotationFiducialNode* selectedFiducial =
     selectedItem->getFiducialNode();
 
-  if (!selectedFiducial)
+  if (!selectedFiducial | 
+      !selectedFiducial->GetAnnotationPointDisplayNode())
     {
     return;
     }
@@ -266,7 +267,7 @@ void qSlicerPathPlannerTableWidget
 	{
 	vtkMRMLAnnotationFiducialNode* currentFiducial =
 	  currentItem->getFiducialNode();
-	if (currentFiducial)
+	if (currentFiducial && currentFiducial->GetAnnotationPointDisplayNode())
 	  {
 	  currentFiducial->GetAnnotationPointDisplayNode()->SetOpacity(0.3);
 	  }

@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>495</width>
-    <height>531</height>
+    <width>486</width>
+    <height>282</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -22,6 +22,11 @@
      <layout class="QVBoxLayout" name="verticalLayout_3">
       <item>
        <widget class="ctkCollapsibleGroupBox" name="TargetGroupBox">
+        <property name="styleSheet">
+         <string notr="true">ctkCollapsibleGroupBox{
+	border:2px solid rgb(28, 166, 22);
+}</string>
+        </property>
         <property name="title">
          <string>Target Point</string>
         </property>
@@ -41,11 +46,16 @@
           <bold>false</bold>
          </font>
         </property>
+        <property name="styleSheet">
+         <string notr="true">ctkCollapsibleGroupBox{
+	border:2px solid blue;
+}</string>
+        </property>
         <property name="title">
          <string>Entry Point</string>
         </property>
         <property name="collapsed">
-         <bool>false</bool>
+         <bool>true</bool>
         </property>
         <layout class="QVBoxLayout">
          <item>
@@ -60,7 +70,7 @@
          <string>Trajectory</string>
         </property>
         <property name="collapsed">
-         <bool>false</bool>
+         <bool>true</bool>
         </property>
         <layout class="QVBoxLayout" name="verticalLayout_4">
          <item>
@@ -152,6 +162,9 @@
     <widget class="ctkCollapsibleButton" name="AdvancedTab">
      <property name="text">
       <string>Advanced</string>
+     </property>
+     <property name="collapsed">
+      <bool>true</bool>
      </property>
      <property name="contentsFrameShape">
       <enum>QFrame::StyledPanel</enum>
