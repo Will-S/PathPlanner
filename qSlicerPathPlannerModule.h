@@ -20,7 +20,6 @@
 
 // SlicerQt includes
 #include "qSlicerLoadableModule.h"
-
 #include "qSlicerPathPlannerModuleExport.h"
 
 class qSlicerPathPlannerModulePrivate;

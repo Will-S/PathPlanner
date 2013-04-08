@@ -18,14 +18,14 @@
 
   ==============================================================================*/
 
-#include "qSlicerPathPlannerTrajectoryItem.h"
-
+// SlicerQt includes
 #include "qSlicerCoreApplication.h"
-#include "vtkMRMLScene.h"
+#include "qSlicerPathPlannerTrajectoryItem.h"
 
 // MRML includes
 #include "vtkMRMLAnnotationFiducialNode.h"
 #include "vtkMRMLAnnotationRulerNode.h"
+#include "vtkMRMLScene.h"
 
 // --------------------------------------------------------------------------
 qSlicerPathPlannerTrajectoryItem

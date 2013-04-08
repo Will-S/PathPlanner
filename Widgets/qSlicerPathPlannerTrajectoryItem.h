@@ -25,8 +25,8 @@
 #include <sstream>
 
 // Qt includes
-#include <QTableWidgetItem>
 #include <QTableWidget>
+#include <QTableWidgetItem>
 #include <QTime>
 
 // VTK includes

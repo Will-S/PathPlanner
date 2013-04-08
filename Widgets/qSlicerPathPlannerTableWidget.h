@@ -21,11 +21,14 @@
 #ifndef __qSlicerPathPlannerTableWidget_h
 #define __qSlicerPathPlannerTableWidget_h
 
-#include "qSlicerWidget.h"
+// VTK includes
 #include <ctkVTKObject.h>
 
+// SlicerQt includes
 #include "qSlicerPathPlannerModuleWidgetsExport.h"
+#include "qSlicerWidget.h"
 
+// Qt includes
 #include <QTableWidget>
 
 class qSlicerPathPlannerTableWidgetPrivate;

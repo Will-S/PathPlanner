@@ -18,23 +18,25 @@
 
 ==============================================================================*/
 
-// PathPlannerPanel Widgets includes
+// PathPlanner Widgets includes
 #include "qSlicerPathPlannerTableWidget.h"
 #include "ui_qSlicerPathPlannerTableWidget.h"
 
+// Annotation logic
+#include "vtkSlicerAnnotationModuleLogic.h"
+
 // VTK includes
-#include "vtkNew.h"
-#include "vtkSmartPointer.h"
 #include "vtkMRMLAnnotationHierarchyNode.h"
 #include "vtkMRMLAnnotationPointDisplayNode.h"
 #include "vtkMRMLInteractionNode.h"
 #include "vtkMRMLSelectionNode.h"
+#include "vtkNew.h"
+#include "vtkSmartPointer.h"
 
-#include "vtkSlicerAnnotationModuleLogic.h"
+// SlicerQt includes
 #include "qSlicerAbstractCoreModule.h"
 #include "qSlicerCoreApplication.h"
 #include "qSlicerModuleManager.h"
-
 #include "qSlicerPathPlannerFiducialItem.h"
 
 //-----------------------------------------------------------------------------

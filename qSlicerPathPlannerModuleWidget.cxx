@@ -22,18 +22,21 @@
 #include "qSlicerPathPlannerModuleWidget.h"
 #include "ui_qSlicerPathPlannerModuleWidget.h"
 
-#include "qSlicerPathPlannerFiducialItem.h"
-#include "qSlicerPathPlannerTrajectoryItem.h"
-
+// Annotation logic
 #include "vtkSlicerAnnotationModuleLogic.h"
+
+// Slicer
 #include "qSlicerAbstractCoreModule.h"
 #include "qSlicerCoreApplication.h"
 #include "qSlicerModuleManager.h"
+#include "qSlicerPathPlannerFiducialItem.h"
+#include "qSlicerPathPlannerTrajectoryItem.h"
 
+// MRML
 #include "vtkMRMLAnnotationFiducialNode.h"
-#include "vtkMRMLAnnotationRulerNode.h"
 #include "vtkMRMLAnnotationHierarchyNode.h"
 #include "vtkMRMLAnnotationPointDisplayNode.h"
+#include "vtkMRMLAnnotationRulerNode.h"
 #include "vtkMRMLPathPlannerTrajectoryNode.h"
 
 //-----------------------------------------------------------------------------

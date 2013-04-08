@@ -20,11 +20,12 @@
 
 // SlicerQt includes
 #include "qSlicerAbstractModuleWidget.h"
-
 #include "qSlicerPathPlannerModuleExport.h"
 
+// VTK includes
 #include <ctkVTKObject.h>
 
+// Qt includes
 #include <QTableWidget>
 
 class qSlicerPathPlannerModuleWidgetPrivate;
