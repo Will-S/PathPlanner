@@ -74,6 +74,15 @@ updateItem()
     return;
     }
 
+  if (!tableWidget->item(itemRow,0) ||
+      !tableWidget->item(itemRow,1) ||
+      !tableWidget->item(itemRow,2) ||
+      !tableWidget->item(itemRow,3) ||
+      !tableWidget->item(itemRow,4))
+    {
+    return;
+    }
+
   // Update text
   std::stringstream fiduPos;
   fiduPos.precision(2);
