@@ -107,6 +107,10 @@ updateItem()
       }
     }
 
+  // Temporary block signals to prevent loop
+  // fiducial updating cells, cells updating fiducial position
+  bool oldState = tableWidget->blockSignals(true);
+
   //   R
   fiduPos << targetPosition[0];  
   tableWidget->item(itemRow, 1)->setText(fiduPos.str().c_str());
@@ -124,5 +128,8 @@ updateItem()
 
   // Time
   tableWidget->item(itemRow,4)->setText(QTime::currentTime().toString());
+
+  // Restore signals
+  tableWidget->blockSignals(oldState);
 }
 

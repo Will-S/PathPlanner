@@ -112,7 +112,7 @@ void qSlicerPathPlannerTrajectoryItem::
 updateItem()
 {
   // TODO: Remove ruler if one of the point removed
-  if (!this->EntryPoint | !this->TargetPoint)
+  if (!this->EntryPoint || !this->TargetPoint)
     {
     return;
     }

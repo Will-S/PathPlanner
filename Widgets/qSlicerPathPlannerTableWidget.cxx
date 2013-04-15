@@ -153,7 +153,7 @@ void qSlicerPathPlannerTableWidget
 {
   Q_D(qSlicerPathPlannerTableWidget);
 
-  if (!d->annotationLogic | !d->selectedHierarchyNode)
+  if (!d->annotationLogic || !d->selectedHierarchyNode)
     {
     return;
     }
@@ -249,7 +249,7 @@ void qSlicerPathPlannerTableWidget
   vtkMRMLAnnotationFiducialNode* selectedFiducial =
     selectedItem->getFiducialNode();
 
-  if (!selectedFiducial | 
+  if (!selectedFiducial || 
       !selectedFiducial->GetAnnotationPointDisplayNode())
     {
     return;
@@ -284,9 +284,9 @@ void qSlicerPathPlannerTableWidget
 {
   Q_D(qSlicerPathPlannerTableWidget);
 
-  if (!d->TableWidget->item(row,0) |
-      !d->TableWidget->item(row,1) |
-      !d->TableWidget->item(row,2) |
+  if (!d->TableWidget->item(row,0) ||
+      !d->TableWidget->item(row,1) ||
+      !d->TableWidget->item(row,2) ||
       !d->TableWidget->item(row,3))
     {
     return;
@@ -304,7 +304,7 @@ void qSlicerPathPlannerTableWidget
   QString yCoord = QString(d->TableWidget->item(row, 2)->text());
   QString zCoord = QString(d->TableWidget->item(row, 3)->text());
 
-  if (xCoord.isEmpty() | yCoord.isEmpty() | zCoord.isEmpty())
+  if (xCoord.isEmpty() || yCoord.isEmpty() || zCoord.isEmpty())
     {
     return;
     }
