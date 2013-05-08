@@ -21,6 +21,8 @@
 #ifndef __qSlicerPathPlannerFiducialItem_h
 #define __qSlicerPathPlannerFiducialItem_h
 
+#include "qSlicerPathPlannerModuleWidgetsExport.h"
+
 // Standards
 #include <sstream>
 
@@ -35,7 +37,8 @@
 // VTK includes
 #include <ctkVTKObject.h>
 
-class qSlicerPathPlannerFiducialItem : public QObject, public QTableWidgetItem
+class Q_SLICER_MODULE_PATHPLANNER_WIDGETS_EXPORT qSlicerPathPlannerFiducialItem
+  : public QObject, public QTableWidgetItem
 {
   Q_OBJECT
   QVTK_OBJECT

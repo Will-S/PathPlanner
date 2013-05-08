@@ -21,6 +21,8 @@
 #ifndef __qSlicerPathPlannerTrajectoryItem_h
 #define __qSlicerPathPlannerTrajectoryItem_h
 
+#include "qSlicerPathPlannerModuleWidgetsExport.h"
+
 // Standards
 #include <sstream>
 
@@ -35,7 +37,8 @@
 class vtkMRMLAnnotationFiducialNode;
 class vtkMRMLAnnotationRulerNode;
 
-class qSlicerPathPlannerTrajectoryItem : public QObject, public QTableWidgetItem
+class Q_SLICER_MODULE_PATHPLANNER_WIDGETS_EXPORT qSlicerPathPlannerTrajectoryItem
+  : public QObject, public QTableWidgetItem
 {
   Q_OBJECT
   QVTK_OBJECT

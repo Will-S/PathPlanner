@@ -9,8 +9,7 @@ class vtkMRMLScene;
 class vtkMRMLAnnotationFiducialNode;
 class vtkMRMLAnnotationRulerNode;
 
-/// \ingroup Slicer_QtModules_Annotation
-class  VTK_SLICER_ANNOTATIONS_MODULE_MRML_EXPORT vtkMRMLPathPlannerTrajectoryNode : public vtkMRMLAnnotationHierarchyNode
+class  VTK_SLICER_PATHPLANNER_MODULE_MRML_EXPORT vtkMRMLPathPlannerTrajectoryNode : public vtkMRMLAnnotationHierarchyNode
 {
 public:
   static vtkMRMLPathPlannerTrajectoryNode *New();
@@ -50,6 +49,7 @@ public:
 protected:
   vtkMRMLPathPlannerTrajectoryNode();
   ~vtkMRMLPathPlannerTrajectoryNode();
+  vtkMRMLPathPlannerTrajectoryNode(const vtkMRMLPathPlannerTrajectoryNode&);
   void operator=(const vtkMRMLPathPlannerTrajectoryNode&); 
 
   typedef std::pair<vtkMRMLAnnotationFiducialNode*, vtkMRMLAnnotationFiducialNode*> FiducialPair;
