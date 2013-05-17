@@ -39,13 +39,6 @@
       </item>
       <item>
        <widget class="ctkCollapsibleGroupBox" name="EntryGroupBox">
-        <property name="font">
-         <font>
-          <pointsize>13</pointsize>
-          <weight>50</weight>
-          <bold>false</bold>
-         </font>
-        </property>
         <property name="styleSheet">
          <string notr="true">ctkCollapsibleGroupBox{
 	border:2px solid blue;

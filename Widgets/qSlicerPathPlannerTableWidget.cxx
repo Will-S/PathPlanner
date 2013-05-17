@@ -220,8 +220,8 @@ void qSlicerPathPlannerTableWidget
     return;
     }
 
-  d->selectedHierarchyNode->RemoveAllChildrenNodes();
   d->TableWidget->clearContents();
+  d->selectedHierarchyNode->RemoveAllChildrenNodes();
   d->TableWidget->setRowCount(0);
 }
 
