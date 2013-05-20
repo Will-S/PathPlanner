@@ -69,13 +69,14 @@ qSlicerPathPlannerModule::~qSlicerPathPlannerModule()
 //-----------------------------------------------------------------------------
 QString qSlicerPathPlannerModule::helpText()const
 {
-  return "This is a loadable module bundled in an extension";
+  return QString("PathPlanner is a module designed to facilitate the creation of trajectory");
 }
 
 //-----------------------------------------------------------------------------
 QString qSlicerPathPlannerModule::acknowledgementText()const
 {
-  return "This work was partially funded by NCIGT";
+  return QString("It is supported by grants 5P01CA067165, 5R01CA124377, 5R01CA138586, 2R44DE019322, 7R01CA124377," 
+  "5R42CA137886, 8P41EB015898");
 }
 
 //-----------------------------------------------------------------------------
