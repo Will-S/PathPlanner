@@ -463,6 +463,18 @@ onDeleteButtonClicked()
     this->mrmlScene()->RemoveNode(itemToRemove->trajectoryNode());
     }
 
+  // BUG: ModifiedEvent seems not to be triggered when removing a child node of hierarchy
+  // Workaround: Call it manually
+  qSlicerAbstractCoreModule* annotationModule =
+    qSlicerCoreApplication::application()->moduleManager()->module("Annotations");
+  vtkSlicerAnnotationModuleLogic* annotationLogic;
+  if (annotationModule)
+    {
+    annotationLogic = 
+      vtkSlicerAnnotationModuleLogic::SafeDownCast(annotationModule->logic());
+    }
+  annotationLogic->GetActiveHierarchyNode()->Modified();
+
   // Remove from widget
   d->TrajectoryTableWidget->removeRow(selectedRow);
 }
@@ -546,9 +558,22 @@ onClearButtonClicked()
     }
 
   // Clear hierarchy node and widget
-  d->selectedTrajectoryNode->RemoveAllChildrenNodes();
   d->TrajectoryTableWidget->clearContents();
   d->TrajectoryTableWidget->setRowCount(0);
+  d->selectedTrajectoryNode->RemoveAllChildrenNodes();
+
+  // BUG: ModifiedEvent seems not to be triggered when removing a child node of hierarchy
+  // Workaround: Call it manually
+  qSlicerAbstractCoreModule* annotationModule =
+    qSlicerCoreApplication::application()->moduleManager()->module("Annotations");
+  vtkSlicerAnnotationModuleLogic* annotationLogic;
+  if (annotationModule)
+    {
+    annotationLogic = 
+      vtkSlicerAnnotationModuleLogic::SafeDownCast(annotationModule->logic());
+    }
+  annotationLogic->GetActiveHierarchyNode()->Modified();
+
 }
 
 //-----------------------------------------------------------------------------
@@ -586,7 +611,6 @@ addNewRulerItem(vtkMRMLAnnotationFiducialNode* entryPoint, vtkMRMLAnnotationFidu
 	}
       }
     }
-
 
   // Set active hierachy node
   qSlicerAbstractCoreModule* annotationModule =
