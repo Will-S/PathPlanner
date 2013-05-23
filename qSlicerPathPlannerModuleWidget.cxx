@@ -852,7 +852,7 @@ onTrajectoryCellChanged(int row, int column)
 {
   Q_D(qSlicerPathPlannerModuleWidget);
 
-  if (!d->TrajectoryTableWidget)
+  if (!d->TrajectoryTableWidget || !d->selectedTrajectoryNode)
     {
     return;
     }
@@ -881,4 +881,7 @@ onTrajectoryCellChanged(int row, int column)
 
   // Set new name
   currentRuler->SetName(currentItem->text().toStdString().c_str());
+
+  // Update hierarchy node
+  d->selectedTrajectoryNode->Modified();
 }
